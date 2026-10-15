@@ -1,0 +1,13 @@
+Shader Animation Generator
+
+Powered by Paper Shaders:
+https://shaders.paper.design
+
+The pattern shader adapts Paper Shaders' Warp shader (Apache-2.0).
+Modifications include six-color blending, grain, parameter mapping and the
+React renderer. The library is not used as a runtime dependency.
+
+The fluid noise functions derive from Ashima Arts / Stefan Gustavson
+webgl-noise (MIT).
+
+Full third-party licenses are distributed in public/THIRD_PARTY_NOTICES.txt.
