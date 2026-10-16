@@ -2,6 +2,8 @@
 
 A browser-based editor for flowing gradients, soft atmospheres and fluid backgrounds. Built with React, TypeScript, Vite and WebGL 2. No backend, account or API key required.
 
+**[Open the website](https://yifffan.github.io/shader-animation-generator/)** — runs directly in your browser, no installation required.
+
 ![Shader editor](docs/preview.png)
 
 ## Run locally
@@ -21,7 +23,7 @@ npm run preview    # Preview at http://127.0.0.1:4173
 npm run typecheck
 ```
 
-Deploy the generated `dist/` directory to a static host. The build uses a relative base for subdirectory hosting and includes third-party licenses. No automatic website deployment is configured.
+The website is hosted on [GitHub Pages](https://yifffan.github.io/shader-animation-generator/). Pushes to `main` automatically build and test the app, then deploy the verified `dist/` artifact. Pull requests run checks without deploying; the Verify workflow also supports manual runs. The build uses a relative base for subdirectory hosting and includes project and third-party licenses. You can also deploy `dist/` to another static host.
 
 ## Features
 
@@ -130,7 +132,8 @@ Full license texts and attribution are in [third-party notices](public/THIRD_PAR
 
 一个可独立运行的 WebGL shader 编辑器：调色、控制流速和颗粒、调整柔光与暗角，并复制或下载 JSON 参数。不需要后端或 API Key。
 
-- 使用 `npm ci && npm run dev` 启动。
+- [直接打开网站](https://yifffan.github.io/shader-animation-generator/)，无需安装；也可以使用 `npm ci && npm run dev` 本地启动。
+- `main` 分支更新并通过测试后，GitHub Pages 网站会自动部署。
 - 右下角为紧凑的预设栏，与底部链接对齐，窄屏可横向滚动。
 - 点击 **Customize** 打开参数面板，点击 **Close** 收起。
 - **Random light / Random dark** 在浅色、深色风格内随机生成变体。
