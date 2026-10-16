@@ -10,6 +10,7 @@ export interface CanvasMetrics {
 interface ObserveCanvasMetricsOptions {
   maxDpr: number
   viewport?: boolean
+  resolution?: { width: number; height: number }
   onResize: (metrics: CanvasMetrics) => void
 }
 
@@ -38,9 +39,19 @@ export const observeCanvasMetrics = (
   {
     maxDpr,
     viewport = false,
+    resolution,
     onResize,
   }: ObserveCanvasMetricsOptions
 ): CanvasMetricsController => {
+  if (resolution) {
+    onResize({
+      cssWidth: resolution.width, cssHeight: resolution.height,
+      pixelWidth: resolution.width, pixelHeight: resolution.height,
+      dpr: 1, deviceDpr: 1,
+    })
+    return { dispose: () => {} }
+  }
+
   let disposed = false
   let measureRaf = 0
   let resizeTimer: ReturnType<typeof setTimeout> | null = null

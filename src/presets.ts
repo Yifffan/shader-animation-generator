@@ -1,6 +1,6 @@
 import type { ShaderGradientProps } from './components/ShaderGradient'
 
-export type ShaderPreset = Omit<ShaderGradientProps, 'className' | 'style' | 'firstFrameOnly' | 'onError'>
+export type ShaderPreset = Omit<ShaderGradientProps, 'className' | 'style' | 'firstFrameOnly' | 'onError' | 'onReady' | 'resolution' | 'frameRate'>
 export type ShaderParameters = Required<ShaderPreset>
 
 export const DEFAULT_PARAMETERS: ShaderParameters = {
