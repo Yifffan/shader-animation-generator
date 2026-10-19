@@ -25,12 +25,7 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npx playwright install --with-deps chromium
-      # Canvas capture needs a composited (visible) renderer, so the video tests
-      # run headed under xvfb; the headless shell records empty frames.
-      - name: Run tests
-        run: xvfb-run --auto-servernum --server-args="-screen 0 1600x1200x24" npm test
-        env:
-          PLAYWRIGHT_HEADED: '1'
+      - run: npm test
       - name: Upload website
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v3
