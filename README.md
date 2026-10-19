@@ -127,6 +127,8 @@ PLAYWRIGHT_CHANNEL=chrome npm test
 
 Tests cover seeded generation, shader compilation and non-uniform pixel output, controls, exports, resizing, minimal UI and failure fallbacks.
 
+The video capture tests are skipped in CI: GPU-less runners fall back to software rendering, which produces blank or truncated clips. They run locally on a normal browser, together with the duration, motion and codec checks; CI still covers the dialog, validation, cancellation, cleanup and layout paths.
+
 ## Credits
 
 Selected shader visual styles co-created with [@yixiangihsiang](https://github.com/yixiangihsiang).
