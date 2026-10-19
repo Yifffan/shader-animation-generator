@@ -18,6 +18,16 @@ button:disabled { opacity: .35; cursor: not-allowed; }
 :focus-visible { outline: 2px solid #9bc9ff; outline-offset: 4px; }
 main { min-height: 100svh; }
 .preview { position: fixed; inset: 0; background: #102139; }
+.video-renderer { position: fixed; inset: 0; opacity: 0; pointer-events: none; }
+.video-options { width: min(380px, calc(100vw - 32px)); padding: 24px; border: 1px solid rgb(255 255 255 / 20%); border-radius: 18px; background: #0e1828; color: #f4f7fd; }
+.video-options::backdrop { background: rgb(3 8 15 / 70%); backdrop-filter: blur(4px); }
+.video-options h2 { margin: 0; font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif; font-size: 18px; font-weight: 500; }
+.video-options p { color: #b9c9dd; font-size: 12px; line-height: 1.6; }
+.video-option-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; font-size: 12px; }
+.video-option-row:first-of-type { margin-top: 24px; }
+.video-option-row input { width: 120px; min-height: 34px; padding: 8px 12px; border: 1px solid rgb(255 255 255 / 10%); border-radius: 10px; background-color: rgb(255 255 255 / 5%); color: #f4f7fd; }
+.video-option-row input:focus-visible { outline: 2px solid rgb(172 205 255 / 65%); outline-offset: 2px; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 22px; }
 .customize-toggle { position: fixed; top: 16px; right: 16px; z-index: 3; min-width: 84px; padding: 6px 10px; font-size: 11px; }
 .presets { position: fixed; right: 16px; bottom: 16px; max-width: calc(100vw - 196px); display: flex; align-items: center; gap: 5px; overflow-x: auto; scrollbar-width: none; z-index: 2; }
 .presets { --fade-left: 0px; --fade-right: 0px; }
@@ -62,7 +72,7 @@ main { min-height: 100svh; }
 @media (prefers-reduced-motion: reduce) {
   .presets button, .customize-toggle { transition: none; }
 }
-.panel { position: fixed; top: 58px; right: 16px; bottom: 58px; width: 304px; overflow: auto; overscroll-behavior: contain; padding: 22px; border: 1px solid rgb(255 255 255 / 20%); border-radius: 18px; background: rgb(14 24 40 / 56%); -webkit-backdrop-filter: blur(32px) saturate(140%) brightness(.72); backdrop-filter: blur(32px) saturate(140%) brightness(.72); box-shadow: 0 12px 36px rgb(0 0 0 / 10%); z-index: 2; scrollbar-width: thin; scrollbar-color: #ffffff40 transparent; }
+.panel { position: fixed; top: 58px; right: 16px; bottom: 58px; width: 336px; overflow: auto; overscroll-behavior: contain; padding: 22px; border: 1px solid rgb(255 255 255 / 20%); border-radius: 18px; background: rgb(14 24 40 / 56%); -webkit-backdrop-filter: blur(32px) saturate(140%) brightness(.72); backdrop-filter: blur(32px) saturate(140%) brightness(.72); box-shadow: 0 12px 36px rgb(0 0 0 / 10%); z-index: 2; scrollbar-width: thin; scrollbar-color: #ffffff40 transparent; }
 .panel .section-heading, .panel .select-row, .panel .slider > span { color: #d2deee; }
 .panel .hint, .panel .colors span { color: #b9c9dd; }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
@@ -88,8 +98,7 @@ main { min-height: 100svh; }
 .colors input::-moz-color-swatch { border: 0; border-radius: 5px; }
 .colors span { font-family: ui-monospace, monospace; color: #a5b4c9; font-size: 8px; }
 .select-row { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; gap: 10px; font-size: 12px; color: #b4c4d9; }
-.select-row select {
-  width: 150px;
+.select-row select, .video-option-row select {
   min-height: 34px;
   padding: 8px 32px 8px 12px;
   appearance: none;
@@ -104,13 +113,15 @@ main { min-height: 100svh; }
   font-size: 12px;
   line-height: 16px;
 }
-.select-row select:hover { background-color: rgb(255 255 255 / 9%); border-color: rgb(255 255 255 / 20%); }
-.select-row select:focus-visible { outline: 2px solid rgb(172 205 255 / 65%); outline-offset: 2px; }
+.select-row select { width: 150px; }
+.video-option-row select { width: 120px; }
+.select-row select:hover, .video-option-row select:hover { background-color: rgb(255 255 255 / 9%); border-color: rgb(255 255 255 / 20%); }
+.select-row select:focus-visible, .video-option-row select:focus-visible { outline: 2px solid rgb(172 205 255 / 65%); outline-offset: 2px; }
 select option { background: #13223a; }
 @supports (appearance: base-select) {
-  .select-row select, .select-row select::picker(select) { appearance: base-select; }
-  .select-row select::picker-icon { display: none; }
-  .select-row select::picker(select) {
+  .select-row select, .select-row select::picker(select), .video-option-row select, .video-option-row select::picker(select) { appearance: base-select; }
+  .select-row select::picker-icon, .video-option-row select::picker-icon { display: none; }
+  .select-row select::picker(select), .video-option-row select::picker(select) {
     padding: 5px;
     margin-top: 5px;
     border: 1px solid rgb(255 255 255 / 16%);
@@ -121,10 +132,10 @@ select option { background: #13223a; }
     -webkit-backdrop-filter: blur(24px) saturate(150%);
     backdrop-filter: blur(24px) saturate(150%);
   }
-  .select-row option { min-height: 32px; padding: 8px 10px; border-radius: 7px; background: transparent; font-size: 12px; }
-  .select-row option:hover, .select-row option:focus { background: rgb(255 255 255 / 9%); outline: none; }
-  .select-row option:checked { background: rgb(153 192 247 / 14%); color: #dceaff; }
-  .select-row option::checkmark { color: #b8d5ff; }
+  .select-row option, .video-option-row option { min-height: 32px; padding: 8px 10px; border-radius: 7px; background: transparent; font-size: 12px; }
+  .select-row option:hover, .select-row option:focus, .video-option-row option:hover, .video-option-row option:focus { background: rgb(255 255 255 / 9%); outline: none; }
+  .select-row option:checked, .video-option-row option:checked { background: rgb(153 192 247 / 14%); color: #dceaff; }
+  .select-row option::checkmark, .video-option-row option::checkmark { color: #b8d5ff; }
 }
 .sliders { display: flex; flex-direction: column; gap: 10px; margin: 22px 0; }
 .slider > span { display: flex; align-items: center; justify-content: space-between; color: #b4c4d9; font-size: 11px; }
@@ -150,6 +161,6 @@ a { color: inherit; text-decoration-color: #ffffff50; text-underline-offset: 3px
   .customize-toggle { top: 12px; right: 12px; min-width: 78px; font-size: 10px; }
   .presets { right: 12px; bottom: 12px; max-width: calc(100vw - 180px); }
   .presets button { font-size: 10px; padding: 4px 8px; }
-  .panel { top: 52px; bottom: 54px; right: 12px; width: min(290px, calc(100vw - 24px)); padding: 18px; }
+  .panel { top: 52px; bottom: 54px; right: 12px; width: min(336px, calc(100vw - 24px)); padding: 18px; }
   footer { bottom: 12px; padding: 0 12px; font-size: 9px; }
 }

@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { copyText } from './clipboard'
 import { ShaderGradient, type ShaderShape, type ShaderType } from './components/ShaderGradient'
+import { VideoExport } from './components/VideoExport'
 import { DEFAULT_PARAMETERS as defaults, SHADER_PRESETS, type ShaderParameters as Parameters } from './presets'
 import { generateVariant, type Mood } from './randomize'
+import { DEFAULT_VIDEO_DURATION_SECONDS, downloadVideoBlob, getVideoMimeType, MAX_VIDEO_DURATION_SECONDS, type VideoSettings } from './video'
 import './styles.css'
 
 type NumericKey = { [K in keyof Parameters]: Parameters[K] extends number ? K : never }[keyof Parameters]
@@ -39,6 +41,12 @@ export default function App() {
   const jsonDetailsRef = useRef<HTMLDetailsElement>(null)
   const jsonTextRef = useRef<HTMLTextAreaElement>(null)
   const [renderError, setRenderError] = useState('')
+  const [videoRequest, setVideoRequest] = useState<{ parameters: Parameters; name: string; mimeType: string; settings: VideoSettings } | null>(null)
+  const [videoMessage, setVideoMessage] = useState('')
+  const [videoDuration, setVideoDuration] = useState(String(DEFAULT_VIDEO_DURATION_SECONDS))
+  const [videoSettings, setVideoSettings] = useState<Omit<VideoSettings, 'durationSeconds'>>({ format: 'mp4', resolution: '1080p', ratio: '16:9', frameRate: 30 })
+  const [videoOptionsError, setVideoOptionsError] = useState('')
+  const videoDialogRef = useRef<HTMLDialogElement>(null)
   const presetsRef = useRef<HTMLElement>(null)
   const [scrollEdges, setScrollEdges] = useState({ left: false, right: false })
 
@@ -108,12 +116,73 @@ export default function App() {
     link.click()
     setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
+  const downloadVideo = () => {
+    if (videoRequest || renderError) return
+    try {
+      getVideoMimeType()
+      setVideoOptionsError('')
+      videoDialogRef.current?.showModal()
+    } catch (error) {
+      setVideoMessage(error instanceof Error ? error.message : 'Video export is unavailable in this browser.')
+    }
+  }
+  const startVideoExport = () => {
+    const durationSeconds = Number(videoDuration)
+    if (videoRequest || renderError || !Number.isInteger(durationSeconds) || durationSeconds < 1 || durationSeconds > MAX_VIDEO_DURATION_SECONDS) return
+    try {
+      const mimeType = getVideoMimeType(videoSettings.format)
+      videoDialogRef.current?.close()
+      setVideoMessage('Preparing video… Keep this tab visible.')
+      setVideoRequest({
+        parameters: { ...params, colors: [...params.colors] },
+        name: activePreset ? activePreset.toLowerCase().replaceAll(' ', '-') : 'custom-shader',
+        mimeType,
+        settings: { ...videoSettings, durationSeconds },
+      })
+    } catch (error) {
+      setVideoOptionsError(error instanceof Error ? error.message : 'Video export is unavailable in this browser.')
+    }
+  }
 
   return (
     <main>
       <div className="preview" aria-label="Shader preview">
         <ShaderGradient {...params} onError={setRenderError} />
       </div>
+      {videoRequest && <VideoExport parameters={videoRequest.parameters} mimeType={videoRequest.mimeType} settings={videoRequest.settings}
+        onProgress={seconds => setVideoMessage(seconds === videoRequest.settings.durationSeconds
+          ? 'Finishing video…'
+          : `Recording video… ${seconds} / ${videoRequest.settings.durationSeconds} s. Keep this tab visible.`)}
+        onComplete={blob => {
+          const filename = downloadVideoBlob(blob, videoRequest.name, videoRequest.settings)
+          setVideoRequest(null)
+          setVideoMessage(`Download started: ${filename}`)
+        }}
+        onError={error => { setVideoRequest(null); setVideoMessage(error) }}
+      />}
+      <dialog ref={videoDialogRef} className="video-options" aria-labelledby="video-options-title">
+        <form onChange={() => setVideoOptionsError('')} onSubmit={event => { event.preventDefault(); startVideoExport() }}>
+          <h2 id="video-options-title">Download video</h2>
+          <label className="video-option-row" htmlFor="video-duration">Duration (seconds)
+            <input id="video-duration" type="number" min="1" max={MAX_VIDEO_DURATION_SECONDS} step="1" required value={videoDuration} onChange={event => setVideoDuration(event.target.value)} autoFocus />
+          </label>
+          <label className="video-option-row" htmlFor="video-format">Format
+            <select id="video-format" value={videoSettings.format} onChange={event => setVideoSettings(previous => ({ ...previous, format: event.target.value as VideoSettings['format'] }))}><option value="mp4">MP4</option><option value="webm">WebM</option></select>
+          </label>
+          <label className="video-option-row" htmlFor="video-resolution">Resolution
+            <select id="video-resolution" value={videoSettings.resolution} onChange={event => setVideoSettings(previous => ({ ...previous, resolution: event.target.value as VideoSettings['resolution'] }))}><option value="1080p">1080P</option><option value="720p">720P</option></select>
+          </label>
+          <label className="video-option-row" htmlFor="video-ratio">Ratio
+            <select id="video-ratio" value={videoSettings.ratio} onChange={event => setVideoSettings(previous => ({ ...previous, ratio: event.target.value as VideoSettings['ratio'] }))}><option value="9:16">9:16</option><option value="16:9">16:9</option></select>
+          </label>
+          <label className="video-option-row" htmlFor="video-fps">FPS
+            <select id="video-fps" value={videoSettings.frameRate} onChange={event => setVideoSettings(previous => ({ ...previous, frameRate: Number(event.target.value) as VideoSettings['frameRate'] }))}><option value="30">30 fps</option><option value="60">60 fps</option></select>
+          </label>
+          {videoOptionsError && <p role="alert">{videoOptionsError}</p>}
+          <p>Keep this tab visible while recording.</p>
+          <div className="dialog-actions"><button type="button" onClick={() => videoDialogRef.current?.close()}>Cancel</button><button type="submit">Start recording</button></div>
+        </form>
+      </dialog>
       {renderError && <div className="render-error" role="alert">{renderError}</div>}
       <button className="customize-toggle" aria-expanded={panelOpen} aria-controls="controls" onClick={() => setPanelOpen(!panelOpen)}>
         {panelOpen ? 'Close' : 'Customize'}
@@ -126,7 +195,9 @@ export default function App() {
       </nav>
       {panelOpen && <aside className="panel" id="controls" aria-label="Shader controls">
         <div className="panel-heading"><h2>{activePreset || 'Custom palette'}</h2></div>
-        <div className="actions"><button onClick={copyParams}>Copy JSON</button><button onClick={downloadParams}>Download JSON</button></div>
+        <div className="actions"><button onClick={copyParams}>Copy JSON</button><button onClick={downloadParams}>Download JSON</button><button onClick={downloadVideo} disabled={!!videoRequest || !!renderError}>Download Video</button></div>
+        <p className="status" role="status" aria-label="Video recording status">{videoMessage}</p>
+        {videoRequest && <button onClick={() => { setVideoRequest(null); setVideoMessage('Video export cancelled.') }}>Cancel video export</button>}
         <p className="status" role="status" aria-label="Export status">{message}</p>
         <div className="section-heading"><span>Colors ({params.colors.length})</span><div className="color-actions">
           <button aria-label="Remove color" disabled={params.colors.length <= 1} onClick={() => update('colors', params.colors.slice(0, -1))}><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h14" /></svg></button>

@@ -42,6 +42,9 @@ export interface ShaderGradientProps {
   bloomRange?: number
   bloomStrength?: number
   onError?: (message: string) => void
+  onReady?: (canvas: HTMLCanvasElement) => void
+  resolution?: { width: number; height: number }
+  frameRate?: 30 | 60
   firstFrameOnly?: boolean
 }
 
@@ -393,10 +396,15 @@ export function ShaderGradient({
   bloomRange = 0.18,
   bloomStrength = 0.4,
   onError,
+  onReady,
+  resolution,
+  frameRate = 30,
   firstFrameOnly = false,
 }: ShaderGradientProps) {
   const errorRef = useRef(onError)
   errorRef.current = onError
+  const readyRef = useRef(onReady)
+  readyRef.current = onReady
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const startTimeRef = useRef<number>(0)
   const paramsRef = useRef({
@@ -437,6 +445,12 @@ export function ShaderGradient({
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
+    let ready = false
+    const didDraw = () => {
+      if (ready) return
+      ready = true
+      readyRef.current?.(canvas)
+    }
 
     errorRef.current?.('')
     canvas.style.display = ''
@@ -551,17 +565,20 @@ export function ShaderGradient({
         gl.uniform1f(u.u_time, elapsed)
         gl.uniform2f(u.u_resolution, canvas.width, canvas.height)
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
+        didDraw()
       }
 
       const snapshotController = createCanvasSnapshotController(canvas, firstFrameOnly ? null : render)
       const playbackController = createCanvasPlaybackController({
         canvas,
         enabled: !firstFrameOnly,
+        frameRate,
         render,
       })
 
       const metricsController = observeCanvasMetrics(canvas, {
         maxDpr: type === 'flowlight' ? 1.5 : 1,
+        resolution,
         onResize: metrics => {
           canvas.width = metrics.pixelWidth
           canvas.height = metrics.pixelHeight
@@ -643,17 +660,20 @@ export function ShaderGradient({
       gl.uniform1f(uniforms.u_pixelRatio, pixelRatio)
       gl.uniform2f(uniforms.u_resolution, canvas.width, canvas.height)
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
+      didDraw()
     }
 
     const snapshotController = createCanvasSnapshotController(canvas, firstFrameOnly ? null : render)
     const playbackController = createCanvasPlaybackController({
       canvas,
       enabled: !firstFrameOnly,
+      frameRate,
       render,
     })
 
     const metricsController = observeCanvasMetrics(canvas, {
       maxDpr: 1.5,
+      resolution,
       onResize: metrics => {
         pixelRatio = metrics.deviceDpr
         canvas.width = metrics.pixelWidth
@@ -676,8 +696,8 @@ export function ShaderGradient({
       gl.deleteShader(fragmentShader)
       gl.deleteBuffer(buffer)
     }
-    // Only re-init when type or firstFrameOnly changes. All other params update via paramsRef in render loop.
-  }, [type, firstFrameOnly])
+    // Rendering options reinitialize the canvas; shader parameters update through paramsRef.
+  }, [type, firstFrameOnly, resolution?.width, resolution?.height, frameRate])
 
   return (
     <canvas

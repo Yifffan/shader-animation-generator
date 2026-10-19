@@ -34,6 +34,7 @@ The website is hosted on [GitHub Pages](https://yifffan.github.io/shader-animati
 - **Customize** opens the controls; **Close** hides them.
 - **Random light / Random dark** generates style-constrained palette variations locally.
 - Copy, view or download a complete JSON parameter object. Copy first uses the Clipboard API, then a legacy compatibility path; if both are blocked, the editor opens and selects the JSON for manual copying.
+- **Download Video** exports the current shader with selectable duration, MP4/WebM format, 1080P/720P resolution, portrait/landscape ratio and 30/60 fps.
 - No analytics, tracking, remote fonts, cookies or API calls in normal operation.
 
 ## Presets
@@ -90,7 +91,25 @@ export function Background() {
 }
 ```
 
-Pattern accepts 1–6 colors; Fluid and Flowlight accept 1–5. Missing Fluid slots render as black; missing Flowlight slots repeat the final color. Controls only appear for parameters used by the current renderer. Animation phase is time-based, so JSON preserves settings rather than a particular frame. Output may vary with viewport size and GPU precision. JSON import and image/video export are not currently included.
+Pattern accepts 1–6 colors; Fluid and Flowlight accept 1–5. Missing Fluid slots render as black; missing Flowlight slots repeat the final color. Controls only appear for parameters used by the current renderer. Animation phase is time-based, so JSON preserves settings rather than a particular frame. Output may vary with viewport size and GPU precision. JSON import and still-image export are not currently included.
+
+## Download a video
+
+Open **Customize**, choose a preset or adjust the shader, then click **Download Video** beside **Copy JSON** and **Download JSON**. Choose your options, then click **Start recording**.
+
+| Option | Choices | Default |
+| --- | --- | --- |
+| Duration | 1–120 whole seconds | 10 seconds |
+| Format | MP4, WebM | MP4 |
+| Resolution | 1080P, 720P | 1080P |
+| Ratio | 9:16, 16:9 | 16:9 |
+| FPS | 30, 60 | 30 |
+
+1080P exports at 1920×1080 (landscape) or 1080×1920 (portrait); 720P uses 1280×720 or 720×1280. Only the shader is captured, without controls, text or audio. The export starts a fresh animation with a snapshot of the selected settings, independent of the window size, device pixel ratio and subsequent edits. Clips are not guaranteed to loop seamlessly.
+
+Recording takes the selected duration, followed by a short encoding step. Keep the tab visible until the download starts. **Cancel video export** discards the recording; hiding or leaving the page also cancels it. Files go to your browser's usual download location or save dialog, for example `abyss-blue-1080p.mp4` or `custom-shader-720p.webm`.
+
+Export requires WebGL 2, canvas capture and a MediaRecorder encoder for the selected format. If a format is unsupported, the dialog asks you to choose another; it does not silently change your choice. All recording stays in the browser with no upload or extra dependencies. Frame rate is a target and depends on browser/GPU performance; on slow devices or software rendering the encoded clip can also be noticeably shorter than the requested duration. At 30 fps, target bitrate is 12 Mbps for 1080P and 6 Mbps for 720P, doubled at 60 fps.
 
 ## Tests
 
@@ -136,6 +155,7 @@ Full license texts and attribution are in [third-party notices](public/THIRD_PAR
 - `main` 分支更新并通过测试后，GitHub Pages 网站会自动部署。
 - 右下角为紧凑的预设栏，与底部链接对齐，窄屏可横向滚动。
 - 点击 **Customize** 打开参数面板，点击 **Close** 收起。
+- 点击 JSON 按钮旁的 **Download Video**，选择时长、MP4/WebM、1080P/720P、9:16/16:9 和 30/60 fps，再点击 **Start recording**。默认 10 秒、MP4、1080P、16:9、30 fps。录制期间保持标签页可见，可点击 **Cancel video export** 取消。导出视频不保证无缝循环。
 - **Random light / Random dark** 在浅色、深色风格内随机生成变体。
 - 所有渲染和随机生成均在本地浏览器中完成。
 - 项目代码采用 MIT；第三方部分保留其 Apache-2.0 / MIT / SIL OFL 1.1 许可证、CC0 公有领域声明及署名。

@@ -6,10 +6,9 @@ export interface CanvasPlaybackController {
 interface CreateCanvasPlaybackControllerOptions {
   canvas: HTMLCanvasElement
   enabled: boolean
+  frameRate?: 30 | 60
   render: (now: number) => void
 }
-
-const FRAME_INTERVAL_MS = 1000 / 30
 
 /**
  * Keeps animation scheduling and page/canvas visibility in one place so each
@@ -18,12 +17,14 @@ const FRAME_INTERVAL_MS = 1000 / 30
 export const createCanvasPlaybackController = ({
   canvas,
   enabled,
+  frameRate = 30,
   render,
 }: CreateCanvasPlaybackControllerOptions): CanvasPlaybackController => {
   let disposed = false
   let visible = true
   let raf = 0
   let lastFrameAt = 0
+  const frameIntervalMs = 1000 / frameRate
 
   const frame = (now: number) => {
     raf = 0
@@ -32,12 +33,12 @@ export const createCanvasPlaybackController = ({
     }
 
     const elapsed = now - lastFrameAt
-    if (lastFrameAt && elapsed < FRAME_INTERVAL_MS) {
+    if (lastFrameAt && elapsed < frameIntervalMs) {
       schedule()
       return
     }
 
-    lastFrameAt = now - (elapsed % FRAME_INTERVAL_MS)
+    lastFrameAt = now - (elapsed % frameIntervalMs)
     render(now)
     schedule()
   }
