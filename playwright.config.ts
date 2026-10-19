@@ -9,7 +9,9 @@ export default defineConfig({
   use: {
     baseURL: 'http://127.0.0.1:4173',
     viewport: { width: 1440, height: 960 },
-    channel: process.env.PLAYWRIGHT_CHANNEL || undefined,
+    // Canvas capture needs a composited renderer; the headless shell does not
+    // produce canvas frames, so CI opts into Chromium's new headless mode.
+    channel: process.env.PLAYWRIGHT_CHANNEL || (process.env.CI ? 'chromium' : undefined),
     launchOptions: { args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] },
     trace: 'retain-on-failure',
   },
